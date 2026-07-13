@@ -1,2 +1,6 @@
 .DS_Store
 *.log
+
+# outreach lead lists — keep private, never publish
+plumber-leads-*.csv
+*-leads-*.csv

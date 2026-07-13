@@ -1,4 +1,4 @@
-/* Oneal Brothers Plumbing — interactions
+/* Your Plumbing Co. — interactions
    Header scroll state · mobile nav · scroll reveal · gauge dial · form · year */
 (function () {
   "use strict";
@@ -368,7 +368,7 @@
   /* ---- instant estimate: the ballpark gauge ----
      Homeowner picks a job + severity, the gauge swings to a live price range,
      and the choice carries into the booking form so there's no re-typing.
-     Ranges are honest Santa Barbara ballparks; the on-site quote is flat + final. */
+     Ranges are honest your area ballparks; the on-site quote is flat + final. */
   var estimator = document.querySelector("[data-estimator]");
   if (estimator) {
     /* lo/hi = full spread for the job; svc maps to the booking <select> */
@@ -546,7 +546,7 @@
     var showDone = function (v) {
       var msgEl = donePanel && donePanel.querySelector("[data-done-msg]");
       if (msgEl && (v.window === "ASAP — it's urgent" || v.service.indexOf("Emergency") === 0)) {
-        msgEl.textContent = "Flagged as urgent — we'll call you fast. If it's an active flood or burst right now, call (805) 555-0100 so we can roll a truck to you.";
+        msgEl.textContent = "Flagged as urgent — we'll call you fast. If it's an active flood or burst right now, call (555) 555-0100 so we can roll a truck to you.";
       }
       if (donePanel) { form.hidden = true; donePanel.hidden = false; donePanel.scrollIntoView({ behavior: "smooth", block: "center" }); }
     };
@@ -594,7 +594,7 @@
           form.classList.remove("is-sending");
           if (status) {
             status.classList.add("is-error");
-            status.textContent = "Couldn't send just now — please call (805) 555-0100 or email us.";
+            status.textContent = "Couldn't send just now — please call (555) 555-0100 or email us.";
           }
           mailtoFallback(v); // give them a working path regardless
         });
