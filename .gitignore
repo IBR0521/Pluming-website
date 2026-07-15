@@ -4,3 +4,7 @@
 # outreach lead lists — keep private, never publish
 plumber-leads-*.csv
 *-leads-*.csv
+plumber-emails-*.csv
+plumber-emails-*.txt
+plumber-callsheet-*.csv
+plumber-callable-*.csv

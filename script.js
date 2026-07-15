@@ -529,6 +529,43 @@
   var FORM_ENDPOINT = "https://formsubmit.co/ajax/" + LEAD_EMAIL;
 
   if (form) {
+    /* ---- smart scheduling guards: no past dates, no gone-by windows ----
+       True slot-locking needs a shared calendar (see Cal.com add-on for
+       appointment businesses); for trades we keep request-and-confirm but
+       stop impossible requests before they're sent. */
+    var dayInput = document.getElementById("f-day");
+    var winSelect = document.getElementById("f-window");
+    var NOTE_DEFAULT = status ? status.textContent : "";
+    var pad2 = function (n) { return (n < 10 ? "0" : "") + n; };
+    var fmtDay = function (d) { return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate()); };
+    if (dayInput && winSelect) {
+      var maxD = new Date(); maxD.setDate(maxD.getDate() + 30);
+      dayInput.min = fmtDay(new Date());
+      dayInput.max = fmtDay(maxD);
+      /* each window's closing hour (24h, visitor's local time) */
+      var WINDOW_ENDS = { "Morning (7am–11am)": 11, "Midday (11am–2pm)": 14, "Afternoon (2pm–5pm)": 17, "Evening (5pm–7pm)": 19 };
+      var syncWindows = function () {
+        var now = new Date();
+        var isToday = dayInput.value === fmtDay(now);
+        Array.prototype.forEach.call(winSelect.options, function (op) {
+          var end = WINDOW_ENDS[op.value];
+          /* a window is gone once we're within an hour of its close */
+          op.disabled = !!(isToday && end && now.getHours() >= end - 1);
+        });
+        var sel = winSelect.options[winSelect.selectedIndex];
+        if (sel && sel.disabled) winSelect.value = "";
+        if (status && !form.classList.contains("is-sending")) {
+          status.classList.remove("is-error");
+          status.textContent = (dayInput.value && new Date(dayInput.value + "T12:00:00").getDay() === 0)
+            ? "Heads up: Sundays are emergency-first — we'll confirm by phone."
+            : NOTE_DEFAULT;
+        }
+      };
+      dayInput.addEventListener("change", syncWindows);
+      dayInput.addEventListener("input", syncWindows);
+      syncWindows();
+    }
+
     var readFields = function () {
       var d = new FormData(form);
       return {
@@ -543,17 +580,24 @@
       };
     };
 
-    var showDone = function (v) {
+    var isUrgent = function (v) {
+      return v.window === "ASAP — it's urgent" || v.service.indexOf("Emergency") === 0;
+    };
+
+    var showDone = function (v, ref) {
       var msgEl = donePanel && donePanel.querySelector("[data-done-msg]");
-      if (msgEl && (v.window === "ASAP — it's urgent" || v.service.indexOf("Emergency") === 0)) {
+      var refEl = donePanel && donePanel.querySelector("[data-ref]");
+      if (refEl) refEl.textContent = "#" + ref;
+      if (msgEl && isUrgent(v)) {
         msgEl.textContent = "Flagged as urgent — we'll call you fast. If it's an active flood or burst right now, call (555) 555-0100 so we can roll a truck to you.";
       }
       if (donePanel) { form.hidden = true; donePanel.hidden = false; donePanel.scrollIntoView({ behavior: "smooth", block: "center" }); }
     };
 
-    var mailtoFallback = function (v) {
-      var subject = "Service request" + (v.service ? " — " + v.service : "") + (v.name ? " (" + v.name + ")" : "");
+    var mailtoFallback = function (v, ref) {
+      var subject = "Service request " + ref + (v.service ? " — " + v.service : "") + (v.name ? " (" + v.name + ")" : "");
       var body = [
+        "Request: " + ref,
         "Name: " + v.name, "Phone: " + v.phone, "Email: " + (v.email || "—"),
         "Service: " + (v.service || "—"),
         "Preferred: " + ((v.day || "—") + (v.window ? " · " + v.window : "")),
@@ -566,37 +610,58 @@
     form.addEventListener("submit", function (e) {
       e.preventDefault();
       var v = readFields();
-      if (v.honey) { showDone(v); return; }                  // silently drop bots
+      /* short reference id, e.g. R-K3F9Z — goes in both emails + the screen */
+      var ref = "R-" + Date.now().toString(36).toUpperCase().slice(-5);
+      if (v.honey) { showDone(v, ref); return; }             // silently drop bots
       if (!form.checkValidity()) { form.reportValidity(); return; }
 
+      var urgent = isUrgent(v);
       form.classList.add("is-sending");
       if (status) { status.classList.remove("is-error"); status.textContent = "Sending your request…"; }
+
+      var payload = {
+        _subject: (urgent ? "🚨 URGENT — " : "") + "New service request " + ref + (v.service ? " — " + v.service : "") + (v.name ? " (" + v.name + ")" : ""),
+        _template: "table",
+        _captcha: "false",
+        request_id: ref,
+        name: v.name, phone: v.phone, email: v.email,
+        service: v.service, preferred_day: v.day, time_window: v.window,
+        message: v.message
+      };
+      if (v.email) {
+        payload._replyto = v.email;   // plumber can just hit Reply
+        payload._autoresponse =       // instant written confirmation to the customer
+          "Thanks" + (v.name ? " " + v.name : "") + " — we got your request (" + ref + "). " +
+          "We'll call you to lock in a time, usually within the hour during business hours. " +
+          (urgent ? "If it's an active flood or burst, call (555) 555-0100 right now so we can move fast. " : "") +
+          "— Your Plumbing Co., (555) 555-0100";
+      }
+
+      /* never leave a customer stuck on "Sending…" — 15s cap, then fallback */
+      var aborter = ("AbortController" in window) ? new AbortController() : null;
+      var timeoutId = aborter && setTimeout(function () { aborter.abort(); }, 15000);
 
       fetch(FORM_ENDPOINT, {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({
-          _subject: "New service request" + (v.service ? " — " + v.service : "") + (v.name ? " (" + v.name + ")" : ""),
-          _template: "table",
-          _captcha: "false",
-          name: v.name, phone: v.phone, email: v.email,
-          service: v.service, preferred_day: v.day, time_window: v.window,
-          message: v.message
-        })
+        body: JSON.stringify(payload),
+        signal: aborter ? aborter.signal : undefined
       })
         .then(function (r) { return r.json().catch(function () { return { success: r.ok }; }); })
         .then(function (data) {
+          if (timeoutId) clearTimeout(timeoutId);
           form.classList.remove("is-sending");
-          if (data && (data.success === true || data.success === "true")) { showDone(v); }
+          if (data && (data.success === true || data.success === "true")) { showDone(v, ref); }
           else { throw new Error("send failed"); }
         })
         .catch(function () {
+          if (timeoutId) clearTimeout(timeoutId);
           form.classList.remove("is-sending");
           if (status) {
             status.classList.add("is-error");
             status.textContent = "Couldn't send just now — please call (555) 555-0100 or email us.";
           }
-          mailtoFallback(v); // give them a working path regardless
+          mailtoFallback(v, ref); // give them a working path regardless
         });
     });
   }
