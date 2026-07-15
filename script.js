@@ -516,17 +516,21 @@
   }
 
   /* ---- booking form: capture a real lead 24/7 ----
-     Posts to FormSubmit.co (free, no signup, no API key, no server).
-     To go live / reroute leads: change the email in FORM_ENDPOINT below to the
-     inbox that should receive requests. The FIRST submission to a new address
-     triggers a one-time activation email — click the link in it once and every
-     future submission lands straight in that inbox.
-     If the network call ever fails, it falls back to the visitor's email app. */
+     Two independent, no-backend form services chained for reliability:
+       1. Formspree (primary) — fast, stable. Endpoint is tied to whichever
+          account created it; for a new client, create a new form at
+          formspree.io under their own account/inbox and swap the URL below.
+       2. FormSubmit (fallback) — used only if Formspree fails/times out.
+          Also the one that sends the customer auto-confirmation email.
+          Change LEAD_EMAIL to reroute this leg. First submission to a new
+          address triggers a one-time activation email — click it once.
+     If both fail, falls back to opening the visitor's email app. */
   var form = document.getElementById("book-form");
   var status = document.getElementById("form-status");
   var donePanel = document.getElementById("book-done");
-  var LEAD_EMAIL = "stevetruckmates@gmail.com"; // <-- inbox that receives the leads
-  var FORM_ENDPOINT = "https://formsubmit.co/ajax/" + LEAD_EMAIL;
+  var LEAD_EMAIL = "ibr20117o@gmail.com"; // <-- FormSubmit fallback inbox
+  var FORMSPREE_ENDPOINT = "https://formspree.io/f/xeeyeqjv"; // <-- primary
+  var FORMSUBMIT_ENDPOINT = "https://formsubmit.co/ajax/" + LEAD_EMAIL; // <-- fallback
 
   if (form) {
     /* ---- smart scheduling guards: no past dates, no gone-by windows ----
@@ -637,11 +641,17 @@
           "— Your Plumbing Co., (555) 555-0100";
       }
 
-      /* never leave a customer stuck on "Sending…" — 15s cap, then fallback */
+      /* never leave a customer stuck on "Sending…" — 30s cap, then fallback.
+         (FormSubmit can take 5–15s on busy days; 15s proved too tight.) */
       var aborter = ("AbortController" in window) ? new AbortController() : null;
-      var timeoutId = aborter && setTimeout(function () { aborter.abort(); }, 15000);
+      var timeoutId = aborter && setTimeout(function () { aborter.abort(); }, 30000);
+      var slowId = setTimeout(function () {
+        if (status && form.classList.contains("is-sending")) {
+          status.textContent = "Still sending — busy line, hang tight…";
+        }
+      }, 8000);
 
-      fetch(FORM_ENDPOINT, {
+      fetch(FORMSUBMIT_ENDPOINT, {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify(payload),
@@ -650,12 +660,14 @@
         .then(function (r) { return r.json().catch(function () { return { success: r.ok }; }); })
         .then(function (data) {
           if (timeoutId) clearTimeout(timeoutId);
+          clearTimeout(slowId);
           form.classList.remove("is-sending");
           if (data && (data.success === true || data.success === "true")) { showDone(v, ref); }
           else { throw new Error("send failed"); }
         })
         .catch(function () {
           if (timeoutId) clearTimeout(timeoutId);
+          clearTimeout(slowId);
           form.classList.remove("is-sending");
           if (status) {
             status.classList.add("is-error");
