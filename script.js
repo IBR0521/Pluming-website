@@ -3,6 +3,43 @@
 (function () {
   "use strict";
 
+  /* ---- per-prospect personalization via URL params ----
+     Add ?co=Business+Name (and optionally &city=City&phone=(614)+555-1212)
+     to the link and the demo instantly shows that plumber's name/city —
+     no rebuild, no separate file. No params = the generic demo stays generic.
+     e.g. https://pluming-website.vercel.app/?co=Limes+Plumbing&city=Columbus */
+  (function personalize() {
+    var p = new URLSearchParams(location.search);
+    var co = (p.get("co") || "").trim();
+    var city = (p.get("city") || "").trim();
+    var phone = (p.get("phone") || "").trim();
+    if (!co && !city && !phone) return;
+
+    var pairs = [];
+    if (co) pairs.push(["Your Plumbing Co.", co]);
+    if (city) pairs.push(["Your City", city]);
+    if (phone) pairs.push(["(555) 555-0100", phone]);
+
+    var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null);
+    var node;
+    while ((node = walker.nextNode())) {
+      var v = node.nodeValue, changed = false;
+      for (var i = 0; i < pairs.length; i++) {
+        if (v.indexOf(pairs[i][0]) > -1) { v = v.split(pairs[i][0]).join(pairs[i][1]); changed = true; }
+      }
+      if (changed) node.nodeValue = v;
+    }
+    if (co) {
+      document.title = co + " — Licensed Local Plumbers";
+      var brandAria = document.querySelector(".brand");
+      if (brandAria) brandAria.setAttribute("aria-label", co + ", home");
+    }
+    if (phone) {
+      var tel = "tel:+1" + phone.replace(/[^0-9]/g, "");
+      document.querySelectorAll('a[href^="tel:"]').forEach(function (a) { a.setAttribute("href", tel); });
+    }
+  })();
+
   /* ---- footer year ---- */
   var yearEl = document.getElementById("year");
   if (yearEl) yearEl.textContent = new Date().getFullYear();
