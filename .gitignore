@@ -8,3 +8,7 @@ plumber-emails-*.csv
 plumber-emails-*.txt
 plumber-callsheet-*.csv
 plumber-callable-*.csv
+plumber-verified-*.csv
+plumber-personalized-*.csv
+plumber-callscript-*.csv
+plumber-coldcall-*.md
