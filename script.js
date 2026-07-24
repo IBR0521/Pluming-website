@@ -81,6 +81,26 @@
     var state = "armed"; // armed -> fixing -> done
     var progress = 0;
 
+    /* ----- borescope HUD: running timecode + live depth readout ----- */
+    var hudTime = hero.querySelector("[data-hud-time]");
+    var hudDepth = hero.querySelector("[data-hud-depth]");
+    var hudStatus = hero.querySelector("[data-hud-status]");
+    var MAXDEPTH = 18.4, hudStart = Date.now(), hudTimer = null;
+    var pad2h = function (n) { return (n < 10 ? "0" : "") + n; };
+    var hudTick = function () {
+      if (hudTime) {
+        var s = Math.floor((Date.now() - hudStart) / 1000);
+        hudTime.textContent = pad2h(Math.floor(s / 3600)) + ":" + pad2h(Math.floor(s / 60) % 60) + ":" + pad2h(s % 60);
+      }
+      if (hudDepth) {
+        var d = state === "done" ? MAXDEPTH
+          : state === "fixing" ? progress * MAXDEPTH
+          : 0.4 + Math.sin(Date.now() / 900) * 0.3; // idle camera creep at the blockage
+        hudDepth.textContent = d.toFixed(1);
+      }
+    };
+    hudTimer = setInterval(hudTick, 200); hudTick();
+
     if ("scrollRestoration" in history) history.scrollRestoration = "manual";
     window.scrollTo(0, 0);
     window.addEventListener("load", function () { if (state !== "done") window.scrollTo(0, 0); });
@@ -242,6 +262,16 @@
         g.closePath();
         g.fillStyle = "rgba(22,15,7,0.42)"; g.fill();
         g.restore();
+        /* wet specular glints — light catching standing water on the gunk */
+        crust.forEach(function (c, ci) {
+          if (ci % 6) return;
+          var bw = bandW(c.d), p = P(c.a, c.d), fog = 1 - c.d * 0.4;
+          var s = Math.max(0.7, bw * 0.085);
+          g.beginPath();
+          g.ellipse(p[0] - s * 0.4, p[1] - s * 0.4, s, s * 0.5, c.a, 0, Math.PI * 2);
+          g.fillStyle = "rgba(255,239,212," + (0.09 + 0.13 * fog) + ")";
+          g.fill();
+        });
       } else {
         /* joint couplings down the clean run */
         [0.13, 0.3, 0.5, 0.72].forEach(function (jd) {
@@ -287,6 +317,10 @@
     };
 
     var draw = function (t, now) {
+      /* subtle handheld-camera wobble while the jet runs — reads as live footage */
+      if (state === "fixing") {
+        pipeCanvas.style.transform = "translate(" + (Math.sin(now * 0.006) * 3.5).toFixed(2) + "px," + (Math.cos(now * 0.0085) * 3).toFixed(2) + "px)";
+      }
       ctx.clearRect(0, 0, W, H);
       ctx.drawImage(dirtyC, 0, 0, W, H);
       if (t <= 0) return;
@@ -316,18 +350,34 @@
         ctx.strokeStyle = "rgba(240,250,255,0.7)"; ctx.lineWidth = Math.max(2, rF * 0.016); ctx.stroke();
       }
       /* spray droplets around the front */
-      for (k = 0; k < 46; k++) {
+      for (k = 0; k < 60; k++) {
         var sa = (k * 2.399 + now * 0.0018) % (Math.PI * 2);
-        var sr = rF + (Math.sin(now * 0.02 + k * 7) * 0.5 + 0.7) * rF * 0.12;
+        var sr = rF + (Math.sin(now * 0.02 + k * 7) * 0.5 + 0.7) * rF * 0.14;
         ctx.beginPath();
         ctx.arc(fx + Math.cos(sa) * sr, fy + Math.sin(sa) * sr * 0.97, 1.2 + (k % 3), 0, Math.PI * 2);
         ctx.fillStyle = "rgba(214,240,255,0.5)"; ctx.fill();
       }
+      /* bright turbulent core right at the nozzle front */
+      var core = ctx.createRadialGradient(fx, fy, 0, fx, fy, rF * 0.9);
+      core.addColorStop(0, "rgba(255,255,255,0.5)"); core.addColorStop(0.4, "rgba(200,232,255,0.22)"); core.addColorStop(1, "rgba(200,232,255,0)");
+      ctx.fillStyle = core; ctx.beginPath(); ctx.arc(fx, fy, rF * 0.9, 0, Math.PI * 2); ctx.fill();
       ctx.restore();
+
+      /* debris blasted off the blockage, tumbling toward the lens */
+      for (k = 0; k < 18; k++) {
+        var dph = ((now * 0.00055) + k * 0.61803398) % 1;   // 0..1 life
+        var da = (k * 2.399963) % (Math.PI * 2);
+        var drad = rF + (maxR - rF) * dph * 0.62;            // flies from front toward the rim
+        var dsz = (1.4 + dph * 8) * (1 + (k % 3) * 0.35);    // grows as it nears the camera
+        var dal = (1 - dph) * (1 - dph) * 0.55;
+        ctx.beginPath();
+        ctx.ellipse(fx + Math.cos(da) * drad, fy + Math.sin(da) * drad * 0.97, dsz, dsz * 0.7, da, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(34,20,9," + dal + ")"; ctx.fill();
+      }
 
       /* mist glow behind the front */
       var mist = ctx.createRadialGradient(fx, fy, rF, fx, fy, Math.min(maxR, rF * 1.6 + 40));
-      mist.addColorStop(0, "rgba(190,225,255,0.13)"); mist.addColorStop(1, "rgba(190,225,255,0)");
+      mist.addColorStop(0, "rgba(190,225,255,0.16)"); mist.addColorStop(1, "rgba(190,225,255,0)");
       ctx.fillStyle = mist; ctx.fillRect(0, 0, W, H);
     };
 
@@ -364,6 +414,10 @@
       document.body.classList.remove(lockClass);
       if (hint) hint.hidden = true;
       if (header) header.classList.add("is-stuck");
+      if (hudStatus) { hudStatus.textContent = "LINE CLEAR"; hudStatus.classList.add("is-clear"); }
+      hudTick();
+      if (hudTimer) { clearInterval(hudTimer); hudTimer = null; }
+      pipeCanvas.style.transform = "";
       draw(1, performance.now());
     };
     /* progress is wall-clock driven, so throttled frames just skip ahead */
@@ -386,6 +440,7 @@
       hero.classList.add("is-fixing");
       if (label) label.textContent = "Clearing the line…";
       if (hint) hint.textContent = "Hydro-jet running — watch the line come back";
+      if (hudStatus) { hudStatus.textContent = "JETTING"; hudStatus.classList.remove("is-clear"); }
       startT = performance.now();
       requestAnimationFrame(rafLoop);
       /* rAF pauses in background tabs — keep the clock honest either way */

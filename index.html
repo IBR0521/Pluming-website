@@ -110,6 +110,23 @@
         <div class="pipe__beam"></div>
       </div>
 
+      <!-- borescope camera HUD (on-screen display, like real sewer-cam footage) -->
+      <div class="cam-hud" data-hud aria-hidden="true">
+        <span class="cam-hud__corner cam-hud__corner--tl"></span>
+        <span class="cam-hud__corner cam-hud__corner--tr"></span>
+        <span class="cam-hud__corner cam-hud__corner--bl"></span>
+        <span class="cam-hud__corner cam-hud__corner--br"></span>
+        <div class="cam-hud__row cam-hud__row--top">
+          <span class="cam-hud__rec"><span class="cam-hud__dot"></span>REC</span>
+          <span class="cam-hud__id">SEWER-CAM 01</span>
+          <span class="cam-hud__time" data-hud-time>00:00:00</span>
+        </div>
+        <div class="cam-hud__row cam-hud__row--bottom">
+          <span class="cam-hud__depth">DEPTH <b data-hud-depth>0.0</b> m</span>
+          <span class="cam-hud__status" data-hud-status>LINE BLOCKED</span>
+        </div>
+      </div>
+
       <!-- the call that clears the line -->
       <button class="torch-btn" data-enter type="button">
         <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path d="M6.6 10.8a15.5 15.5 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.24 11.4 11.4 0 0 0 3.5.56 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1 11.4 11.4 0 0 0 .56 3.5 1 1 0 0 1-.24 1z" fill="currentColor"/></svg>
@@ -621,6 +638,6 @@
   </a>
 
   <div class="grain" aria-hidden="true"></div>
-  <script src="script.js?v=5"></script>
+  <script src="script.js?v=6"></script>
 </body>
 </html>
