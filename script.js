@@ -3,6 +3,10 @@
 (function () {
   "use strict";
 
+  /* anime.js v4 (vendored UMD global) — used for count-ups + staggered reveals.
+     Guarded so the site still works if the library ever fails to load. */
+  var ANIME = (window.anime && window.anime.animate) ? window.anime : null;
+
   /* ---- per-prospect personalization via URL params ----
      Add ?co=Business+Name (and optionally &city=City&phone=(614)+555-1212)
      to the link and the demo instantly shows that plumber's name/city —
@@ -489,6 +493,7 @@
     var ticksG = estimator.querySelector("[data-gauge-ticks]");
 
     var job = null, sev = "typical";
+    var cur = { lo: 0, hi: 0 };   // displayed values, for the count-up animation
     var pathLen = valPath.getTotalLength ? valPath.getTotalLength() : 503;
     valPath.style.strokeDasharray = pathLen;
     valPath.style.strokeDashoffset = pathLen;
@@ -528,7 +533,16 @@
       if (emg) { lo = lo * 1.3 + 95; hi = hi * 1.3 + 95; }
 
       amountEl.classList.remove("is-empty");
-      amountEl.textContent = money(lo) + " – " + money(hi);
+      /* roll the price up to the new range instead of snapping */
+      if (ANIME) {
+        ANIME.animate(cur, {
+          lo: lo, hi: hi, duration: 620, ease: "out(3)",
+          onUpdate: function () { amountEl.textContent = money(cur.lo) + " – " + money(cur.hi); }
+        });
+      } else {
+        cur.lo = lo; cur.hi = hi;
+        amountEl.textContent = money(lo) + " – " + money(hi);
+      }
       subEl.textContent = b.big
         ? "Big job — final number scoped on site"
         : (emg ? "Includes after-hours call-out"
@@ -587,8 +601,14 @@
     var io = new IntersectionObserver(function (entries) {
       entries.forEach(function (entry) {
         if (entry.isIntersecting) {
-          entry.target.classList.add("is-in");
-          io.unobserve(entry.target);
+          var el = entry.target;
+          if (ANIME) {
+            el.style.transition = "none";           // let anime own the motion
+            ANIME.animate(el, { opacity: [0, 1], translateY: [26, 0], duration: 760, ease: "out(3)" });
+          } else {
+            el.classList.add("is-in");              // fallback: CSS transition
+          }
+          io.unobserve(el);
         }
       });
     }, { threshold: 0.12, rootMargin: "0px 0px -6% 0px" });
