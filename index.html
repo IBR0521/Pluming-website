@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Your Plumbing Co. — Licensed Local Plumbers | Upfront &amp; Guaranteed</title>
   <meta name="description" content="A licensed local plumbing company. Leaks, drains, water heaters, repipes and 24/7 emergency service. Upfront pricing, work guaranteed." />
-  <meta name="theme-color" content="#0E1613" />
+  <meta name="theme-color" content="#0a1120" />
 
   <meta property="og:title" content="Your Plumbing Co. — Licensed Local Plumbers" />
   <meta property="og:description" content="Licensed local plumbers. Leaks, drains, water heaters, repipes, 24/7 emergency. Upfront pricing, work guaranteed." />
@@ -17,7 +17,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Archivo:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles.css?v=2" />
 
   <script type="application/ld+json">
   {
@@ -95,84 +95,51 @@
   </header>
 
   <main id="main">
-    <!-- ===================== HERO — interactive pipe ===================== -->
-    <section class="hero is-armed" data-hero aria-label="Your Plumbing Co.">
-      <noscript><style>
-        .hero.is-armed .hero__reveal{opacity:1!important;visibility:visible!important}
-        .hero .pipe__dark,.hero .pipe__beam,.hero__hint,.torch-btn{display:none!important}
-        .hero{background:#20130a!important}
-      </style></noscript>
-
-      <!-- the pipe bore, drawn live on canvas -->
-      <div class="pipe" aria-hidden="true">
-        <canvas class="pipe__canvas" data-pipe></canvas>
-        <div class="pipe__dark"></div>
-        <div class="pipe__beam"></div>
+    <!-- ===================== HERO — midnight · blueprint grid · water ripples ===================== -->
+    <section class="hero" data-hero aria-label="Your Plumbing Co.">
+      <!-- deep midnight backdrop: interactive ripple canvas + metallic blueprint grid -->
+      <div class="hero__bg" aria-hidden="true">
+        <canvas class="hero__ripple" data-ripple></canvas>
+        <div class="hero__grid"></div>
+        <div class="hero__vignette"></div>
       </div>
 
-      <!-- borescope camera HUD (on-screen display, like real sewer-cam footage) -->
-      <div class="cam-hud" data-hud aria-hidden="true">
-        <span class="cam-hud__corner cam-hud__corner--tl"></span>
-        <span class="cam-hud__corner cam-hud__corner--tr"></span>
-        <span class="cam-hud__corner cam-hud__corner--bl"></span>
-        <span class="cam-hud__corner cam-hud__corner--br"></span>
-        <div class="cam-hud__row cam-hud__row--top">
-          <span class="cam-hud__rec"><span class="cam-hud__dot"></span>REC</span>
-          <span class="cam-hud__id">SEWER-CAM 01</span>
-          <span class="cam-hud__time" data-hud-time>00:00:00</span>
+      <div class="hero__inner">
+        <p class="eyebrow eyebrow--light"><span class="eyebrow__dot"></span> Licensed &amp; Insured · Locally Owned</p>
+        <h1 class="hero__title">Plumbing done<br />like our name's<br /><span>on the line.</span></h1>
+        <p class="hero__lede">One honest, licensed crew — fixing the leaks, clogs, water heaters and burst pipes that keep your neighborhood up at night. Flat price before we start. Work you can see.</p>
+
+        <div class="hero__actions">
+          <a class="btn btn--copper btn--lg" href="tel:+15555550100">
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M6.6 10.8a15.5 15.5 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.24 11.4 11.4 0 0 0 3.5.56 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1 11.4 11.4 0 0 0 .56 3.5 1 1 0 0 1-.24 1z" fill="currentColor"/></svg>
+            Call (555) 555-0100
+          </a>
+          <a class="btn btn--glass btn--lg" href="#book">Book online</a>
         </div>
-        <div class="cam-hud__row cam-hud__row--bottom">
-          <span class="cam-hud__depth">DEPTH <b data-hud-depth>0.0</b> m</span>
-          <span class="cam-hud__status" data-hud-status>LINE BLOCKED</span>
-        </div>
+
+        <dl class="hero__metrics" aria-label="At a glance">
+          <div class="metric"><dt>Rating</dt><dd>4.9<span>/5</span></dd></div>
+          <div class="metric"><dt>Response</dt><dd>Same<span>-day</span></dd></div>
+          <div class="metric"><dt>Pricing</dt><dd>Flat<span>-rate</span></dd></div>
+          <div class="metric"><dt>Warranty</dt><dd>Guaranteed</dd></div>
+        </dl>
       </div>
 
-      <!-- the call that clears the line -->
-      <button class="torch-btn" data-enter type="button">
-        <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path d="M6.6 10.8a15.5 15.5 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.24 11.4 11.4 0 0 0 3.5.56 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1 11.4 11.4 0 0 0 .56 3.5 1 1 0 0 1-.24 1z" fill="currentColor"/></svg>
-        <span data-enter-label>Call us now</span>
-      </button>
-      <p class="hero__hint" data-hint>Your line's blocked. Slide your light through it — then press the button and we'll clear it.</p>
-
-      <!-- revealed after the pipe is fixed (default/no-JS state) -->
-      <div class="hero__reveal" data-reveal>
-        <div class="wrap hero__inner">
-          <p class="eyebrow eyebrow--light"><span class="eyebrow__dot"></span> Licensed &amp; Insured · Locally Owned</p>
-          <h1 class="hero__title">Plumbing done<br />like our name's<br /><span>on the line.</span></h1>
-          <p class="hero__lede">One honest, licensed crew — fixing the leaks, clogs, water heaters and burst pipes that keep your neighborhood up at night. Flat price before we start. Work you can see.</p>
-
-          <div class="hero__actions">
-            <a class="btn btn--copper btn--lg" href="tel:+15555550100">
-              <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M6.6 10.8a15.5 15.5 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.24 11.4 11.4 0 0 0 3.5.56 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1 11.4 11.4 0 0 0 .56 3.5 1 1 0 0 1-.24 1z" fill="currentColor"/></svg>
-              Call (555) 555-0100
-            </a>
-            <a class="btn btn--outline btn--lg" href="#book">Book online</a>
-          </div>
-
-          <dl class="hero__readout" aria-label="At a glance">
-            <div><dt>Rating</dt><dd>4.9<span>/5</span></dd></div>
-            <div><dt>Response</dt><dd>Same<span>-day</span></dd></div>
-            <div><dt>Pricing</dt><dd>Flat<span>-rate</span></dd></div>
-            <div><dt>Warranty</dt><dd>Yes<span>·always</span></dd></div>
-          </dl>
-        </div>
-
-        <!-- service ticker -->
-        <div class="ticker" aria-hidden="true">
-          <div class="ticker__track">
-            <span>Leak detection</span><span class="ticker__dot">◦</span>
-            <span>Drain &amp; sewer clearing</span><span class="ticker__dot">◦</span>
-            <span>Water heaters &amp; tankless</span><span class="ticker__dot">◦</span>
-            <span>Copper &amp; PEX repipes</span><span class="ticker__dot">◦</span>
-            <span>Fixtures &amp; faucets</span><span class="ticker__dot">◦</span>
-            <span>24/7 emergency</span><span class="ticker__dot">◦</span>
-            <span>Leak detection</span><span class="ticker__dot">◦</span>
-            <span>Drain &amp; sewer clearing</span><span class="ticker__dot">◦</span>
-            <span>Water heaters &amp; tankless</span><span class="ticker__dot">◦</span>
-            <span>Copper &amp; PEX repipes</span><span class="ticker__dot">◦</span>
-            <span>Fixtures &amp; faucets</span><span class="ticker__dot">◦</span>
-            <span>24/7 emergency</span><span class="ticker__dot">◦</span>
-          </div>
+      <!-- service ticker -->
+      <div class="ticker" aria-hidden="true">
+        <div class="ticker__track">
+          <span>Leak detection</span><span class="ticker__dot">◦</span>
+          <span>Drain &amp; sewer clearing</span><span class="ticker__dot">◦</span>
+          <span>Water heaters &amp; tankless</span><span class="ticker__dot">◦</span>
+          <span>Copper &amp; PEX repipes</span><span class="ticker__dot">◦</span>
+          <span>Fixtures &amp; faucets</span><span class="ticker__dot">◦</span>
+          <span>24/7 emergency</span><span class="ticker__dot">◦</span>
+          <span>Leak detection</span><span class="ticker__dot">◦</span>
+          <span>Drain &amp; sewer clearing</span><span class="ticker__dot">◦</span>
+          <span>Water heaters &amp; tankless</span><span class="ticker__dot">◦</span>
+          <span>Copper &amp; PEX repipes</span><span class="ticker__dot">◦</span>
+          <span>Fixtures &amp; faucets</span><span class="ticker__dot">◦</span>
+          <span>24/7 emergency</span><span class="ticker__dot">◦</span>
         </div>
       </div>
     </section>
@@ -638,7 +605,6 @@
   </a>
 
   <div class="grain" aria-hidden="true"></div>
-  <script src="assets/js/anime.umd.min.js"></script>
-  <script src="script.js?v=7"></script>
+  <script src="script.js?v=8"></script>
 </body>
 </html>
