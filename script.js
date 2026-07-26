@@ -71,96 +71,92 @@
     });
   }
 
-  /* ---- hero backdrop: interactive water ripples on a midnight canvas ---- */
+  /* hero handle — the backdrop is now the WebGL "liquid element" in fluid-cursor.js */
   var hero = document.querySelector("[data-hero]");
-  var rippleCanvas = hero && hero.querySelector("[data-ripple]");
-  if (hero && rippleCanvas && rippleCanvas.getContext) {
-    var rctx = rippleCanvas.getContext("2d");
-    var rReduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    var RDPR = Math.min(window.devicePixelRatio || 1, 2);
-    var rW = 0, rH = 0, rafR = null;
-    var ripples = [];
-    var MAXR = 46;
 
-    var sizeRipple = function () {
-      rW = hero.clientWidth; rH = hero.clientHeight;
-      rippleCanvas.width = Math.round(rW * RDPR);
-      rippleCanvas.height = Math.round(rH * RDPR);
-      rippleCanvas.style.width = rW + "px";
-      rippleCanvas.style.height = rH + "px";
-      rctx.setTransform(RDPR, 0, 0, RDPR, 0, 0);
-    };
+  /* ---- GSAP: masked headline reveal, scroll choreography, magnetic buttons ----
+     Guarded on window.gsap so the site is fully functional if GSAP is absent
+     (headline/bento resting state is the visible one; from()/scrub only enhance). */
+  (function () {
+    if (!window.gsap || !hero) return;
+    var G = window.gsap;
+    var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var hasST = !!window.ScrollTrigger;
+    if (hasST) G.registerPlugin(window.ScrollTrigger);
 
-    var spawn = function (x, y, strength) {
-      if (ripples.length >= MAXR) ripples.splice(0, ripples.length - MAXR + 1);
-      ripples.push({ x: x, y: y, r: 5, max: 130 + Math.random() * 130, life: 1, w: strength || 1 });
-    };
+    var lines = hero.querySelectorAll("[data-hero-title] .line__in");
 
-    if (!rReduce) {
-      /* pointer drags a wake through the water */
-      var lastX = 0, lastY = 0, lastSpawn = 0;
-      hero.addEventListener("pointermove", function (e) {
-        var rect = rippleCanvas.getBoundingClientRect();
-        var x = e.clientX - rect.left, y = e.clientY - rect.top;
-        var now = performance.now();
-        var moved = Math.hypot(x - lastX, y - lastY);
-        if (now - lastSpawn > 58 && moved > 6) {
-          spawn(x, y, Math.min(1.7, 0.55 + moved / 90));
-          lastSpawn = now; lastX = x; lastY = y;
-        }
-      }, { passive: true });
-      hero.addEventListener("pointerdown", function (e) {
-        var rect = rippleCanvas.getBoundingClientRect();
-        spawn(e.clientX - rect.left, e.clientY - rect.top, 2.2);
-      }, { passive: true });
-    }
+    if (!reduce) {
+      /* Load-in: heading lines rise out of their overflow masks.
+         The hidden start state is only ever applied when we know the animation
+         can actually run — rAF (and GSAP's ticker) is frozen in a background tab,
+         which would otherwise strand the headline off-screen inside its mask. */
+      var intro = null;
+      var finishIntro = function () {          // safe to call any time; no-op once done
+        if (intro) { intro.progress(1); return; }
+        G.set(lines, { yPercent: 0 });
+      };
 
-    var ambientT = 0;
-    var frame = function (t) {
-      rctx.clearRect(0, 0, rW, rH);
-      /* a slow ambient drip keeps the surface alive when the pointer is still */
-      if (t - ambientT > 1500) {
-        spawn(rW * (0.15 + Math.random() * 0.7), rH * (0.28 + Math.random() * 0.55), 0.6);
-        ambientT = t;
+      if (document.hidden) {
+        G.set(lines, { yPercent: 0 });         // background tab: never hide what can't animate
+      } else {
+        G.set(lines, { yPercent: 120 });
+        intro = G.to(lines, { yPercent: 0, duration: 1.1, ease: "power4.out", stagger: 0.1, delay: 0.12 });
+        /* Unconditional failsafe. rAF can be throttled even while the page is *visible*
+           (embedded webviews, unfocused windows), which stalls GSAP's ticker mid-tween
+           and would otherwise strand the headline inside its mask. By 2s the intro
+           (0.12 delay + 1.1s + 0.2s stagger) is due, so force it to completion. */
+        setTimeout(finishIntro, 2000);
       }
-      for (var i = ripples.length - 1; i >= 0; i--) {
-        var rp = ripples[i];
-        rp.r += (rp.max - rp.r) * 0.045 + 0.6;
-        rp.life -= 0.0105;
-        if (rp.life <= 0 || rp.r >= rp.max) { ripples.splice(i, 1); continue; }
-        var a = rp.life * rp.life * 0.5 * rp.w;
-        rctx.beginPath();
-        rctx.arc(rp.x, rp.y, rp.r, 0, Math.PI * 2);
-        rctx.strokeStyle = "rgba(214, 178, 108," + (a * 0.55).toFixed(3) + ")";
-        rctx.lineWidth = 1.4;
-        rctx.stroke();
-        rctx.beginPath();
-        rctx.arc(rp.x, rp.y, rp.r * 0.68, 0, Math.PI * 2);
-        rctx.strokeStyle = "rgba(122, 166, 226," + (a * 0.5).toFixed(3) + ")";
-        rctx.lineWidth = 1;
-        rctx.stroke();
-      }
-      rafR = requestAnimationFrame(frame);
-    };
-
-    sizeRipple();
-    if (rReduce) {
-      /* static: a few calm concentric rings, no animation */
-      [[0.72, 0.38, 1], [0.38, 0.62, 0.7], [0.86, 0.72, 0.5]].forEach(function (p) {
-        var x = rW * p[0], y = rH * p[1];
-        for (var k = 1; k <= 3; k++) {
-          rctx.beginPath(); rctx.arc(x, y, 26 * k, 0, Math.PI * 2);
-          rctx.strokeStyle = "rgba(150, 180, 225," + (0.1 / k * p[2]).toFixed(3) + ")";
-          rctx.lineWidth = 1; rctx.stroke();
-        }
+      document.addEventListener("visibilitychange", function () {
+        if (!document.hidden) finishIntro();
       });
-    } else {
-      rafR = requestAnimationFrame(frame);
+      window.addEventListener("focus", finishIntro);
+
+      /* scroll-scrubbed: lines clip up + fade, stats lift, backdrop layers drift apart */
+      if (hasST) {
+        var tl = G.timeline({ scrollTrigger: { trigger: hero, start: "top top", end: "bottom top", scrub: 0.6 } });
+        tl.fromTo(lines, { yPercent: 0, opacity: 1 },
+                  { yPercent: -115, opacity: 0.12, ease: "none", stagger: 0.05, immediateRender: false }, 0)
+          .to("[data-stats] .stat", { yPercent: -30, opacity: 0.25, ease: "none", stagger: 0.04 }, 0)
+          .to(".hero__lede, .hero__actions", { y: -34, opacity: 0.2, ease: "none" }, 0)
+          /* depth: the photo and the drawing over it travel at different rates */
+          .to("[data-hero-photo] img", { yPercent: -12, scale: 1.16, ease: "none" }, 0)
+          .to("[data-hero-blueprint]", { yPercent: -26, ease: "none" }, 0);
+
+        /* section imagery: oversized, scaled, drifting as it passes through view */
+        [".band__media img", ".craft__photo img"].forEach(function (sel) {
+          var el = document.querySelector(sel);
+          if (!el) return;
+          G.fromTo(el, { scale: 1.18, yPercent: -6 }, {
+            scale: 1, yPercent: 6, ease: "none",
+            scrollTrigger: { trigger: el.closest("section, figure") || el, start: "top bottom", end: "bottom top", scrub: 0.8 }
+          });
+        });
+      }
     }
 
-    var rsizeT;
-    window.addEventListener("resize", function () { clearTimeout(rsizeT); rsizeT = setTimeout(sizeRipple, 150); });
-  }
+    /* magnetic buttons — spring-damped pull toward the cursor (pointer devices only) */
+    if (!reduce && window.matchMedia("(hover: hover)").matches) {
+      hero.querySelectorAll("[data-magnetic]").forEach(function (btn) {
+        var inner = btn.querySelector("[data-magnetic-pull]") || btn;
+        var xTo = G.quickTo(btn, "x", { duration: 0.5, ease: "power3" });
+        var yTo = G.quickTo(btn, "y", { duration: 0.5, ease: "power3" });
+        var ixTo = G.quickTo(inner, "x", { duration: 0.6, ease: "power3" });
+        var iyTo = G.quickTo(inner, "y", { duration: 0.6, ease: "power3" });
+        btn.addEventListener("pointermove", function (e) {
+          var r = btn.getBoundingClientRect();
+          var mx = e.clientX - (r.left + r.width / 2);
+          var my = e.clientY - (r.top + r.height / 2);
+          xTo(mx * 0.38); yTo(my * 0.55);
+          ixTo(mx * 0.14); iyTo(my * 0.2);
+        });
+        btn.addEventListener("pointerleave", function () { xTo(0); yTo(0); ixTo(0); iyTo(0); });
+      });
+    }
+
+    if (reduce && hasST) window.ScrollTrigger.getAll().forEach(function (s) { s.kill(); });
+  })();
 
   /* ---- instant estimate: the ballpark gauge ----
      Homeowner picks a job + severity, the gauge swings to a live price range,
@@ -303,21 +299,51 @@
     ".section-head, .row, .band__inner, .why__copy, .dialcard, .stage, .craft__photo, .craft__copy, .review, .area__grid > div, .book__grid > div, .specbar__item, .estimator__panel, .estimator__gauge, .repwall"
   );
   revealTargets.forEach(function (el) { el.classList.add("reveal"); });
+  /* counter-motion: every other card in a peer group drops in from above instead of
+     rising, so groups read as one flowing movement rather than a uniform slide */
+  document.querySelectorAll(".stage, .review, .specbar__item").forEach(function (el, i) {
+    if (i % 2) el.classList.add("reveal--down");
+  });
 
   var dial = document.querySelector("[data-dial]");
 
   if ("IntersectionObserver" in window && !reduceMotion) {
+    var show = function (el, delayMs) {
+      if (el.classList.contains("is-in")) return;
+      el.style.transitionDelay = (delayMs || 0) + "ms";
+      el.classList.add("is-in");                    // CSS transition drives the reveal
+      io.unobserve(el);
+    };
+
+    /* threshold 0: any sliver counts. At 0.12 a fast scroll could carry an element
+       through the viewport between sampling frames, so it never registered as
+       intersecting and stayed at opacity:0 permanently. */
     var io = new IntersectionObserver(function (entries) {
       var batch = 0;
       entries.forEach(function (entry) {
-        if (entry.isIntersecting) {
-          entry.target.style.transitionDelay = (batch++ * 70) + "ms";  // gentle stagger
-          entry.target.classList.add("is-in");      // CSS transition drives the reveal
-          io.unobserve(entry.target);
-        }
+        if (entry.isIntersecting) show(entry.target, Math.min(batch++, 4) * 70);
       });
-    }, { threshold: 0.12, rootMargin: "0px 0px -6% 0px" });
+    }, { threshold: 0, rootMargin: "0px 0px -8% 0px" });
     revealTargets.forEach(function (el) { io.observe(el); });
+
+    /* Safety net: whatever the observer misses, reveal anything that has reached or
+       passed the viewport. Content must never be left permanently invisible. */
+    var sweepT = null;
+    var sweep = function () {
+      sweepT = null;
+      var vh = window.innerHeight;
+      revealTargets.forEach(function (el) {
+        if (el.classList.contains("is-in")) return;
+        if (el.getBoundingClientRect().top < vh * 0.94) show(el, 0);
+      });
+    };
+    window.addEventListener("scroll", function () {
+      if (!sweepT) sweepT = setTimeout(sweep, 120);
+    }, { passive: true });
+    window.addEventListener("resize", function () {
+      if (!sweepT) sweepT = setTimeout(sweep, 120);
+    }, { passive: true });
+    window.addEventListener("load", sweep);
 
     if (dial) {
       var dialIo = new IntersectionObserver(function (entries) {
