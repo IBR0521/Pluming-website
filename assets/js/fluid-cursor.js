@@ -212,6 +212,15 @@
   var minDT = isMobile ? 1000 / 34 : 0;   // throttle mobile to ~34fps
   var LIFE = 1500;                          // ripple lifetime (ms) -> settles back
 
+  /* The GL draw call itself is cheap (one bind + one drawArrays), but drawType()
+     re-renders text with Canvas2D and re-uploads a full-resolution texture to the
+     GPU — that is real, continuous work. The marquee drifts slowly, so refreshing
+     it 60x/sec bought nothing but was a constant tax on every scroll and repaint
+     the whole time the hero was in view. Refresh that texture at ~12fps instead;
+     the GL side (cursor ripple, displacement) still renders at full frame rate. */
+  var lastTexUpdate = 0;
+  var TEX_DT = isMobile ? 1000 / 6 : 1000 / 12;
+
   function frame(now) {
     raf = requestAnimationFrame(frame);
     if (!running) return;
@@ -219,7 +228,7 @@
     lastFrame = now;
 
     var t = (now - start) / 1000;
-    drawType(t);
+    if (now - lastTexUpdate >= TEX_DT) { lastTexUpdate = now; drawType(t); }
 
     // ease cursor (inertia) + decay its lens strength
     mouse.x += (mouse.tx - mouse.x) * 0.12;

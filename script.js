@@ -172,8 +172,21 @@
       if (elapsed < 260) { requestAnimationFrame(probe); return; }
       if (frames / (elapsed / 1000) < 20) return;      // throttled -> keep native scroll
 
-      var lenis = new Lenis({ duration: 1.05, smoothWheel: true, touchMultiplier: 1.6, autoRaf: true });
+      /* autoRaf:false — Lenis, GSAP's ticker, and the WebGL hero canvas were each
+         running their own independent requestAnimationFrame loop, uncoordinated.
+         Drive Lenis from GSAP's ticker instead so there is one scheduling source
+         for scroll + animation, which is the pattern Lenis's own docs recommend
+         when pairing with GSAP — it removes a whole class of scroll-time jank. */
+      var lenis = new Lenis({ duration: 1.05, smoothWheel: true, touchMultiplier: 1.6, autoRaf: false });
       document.documentElement.style.scrollBehavior = "auto";  // CSS smooth fights Lenis
+
+      if (window.gsap) {
+        window.gsap.ticker.add(function (time) { lenis.raf(time * 1000); });
+        window.gsap.ticker.lagSmoothing(0);
+      } else {
+        var lenisRaf = function (t) { lenis.raf(t); requestAnimationFrame(lenisRaf); };
+        requestAnimationFrame(lenisRaf);
+      }
 
       if (window.ScrollTrigger) {
         lenis.on("scroll", window.ScrollTrigger.update);
