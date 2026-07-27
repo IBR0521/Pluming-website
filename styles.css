@@ -369,6 +369,37 @@ img, svg { display: block; max-width: 100%; }
 .specbar__item + .specbar__item { padding-left: 26px; border-left: 1px solid rgba(28, 19, 11, 0.22); }
 .specbar__k { display: block; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; font-weight: 700; margin-bottom: 5px; color: #402713; }
 
+/* ===================== BRANDS WE SERVICE ===================== */
+.brands { background: var(--ink); border-bottom: 1px solid var(--line-dark); padding-block: 30px; }
+.brands__inner { display: flex; align-items: center; gap: clamp(20px, 3vw, 46px); flex-wrap: wrap; }
+.brands__label {
+  font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--brass); white-space: nowrap;
+}
+.brands__list {
+  list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; align-items: center;
+  gap: clamp(16px, 2.6vw, 40px); flex: 1;
+}
+.brands__list li {
+  font-family: var(--font-display); font-size: clamp(15px, 1.5vw, 19px); font-weight: 600;
+  letter-spacing: -0.01em; color: rgba(226, 233, 245, 0.42);
+  transition: color 0.35s ease;
+}
+.brands__list li:hover { color: rgba(232, 239, 250, 0.86); }
+
+/* ===================== end-of-section CTA ===================== */
+.sect-cta {
+  margin-top: 46px; padding-top: 34px; border-top: 1px solid var(--line-light);
+  display: flex; align-items: center; justify-content: space-between; gap: 28px; flex-wrap: wrap;
+}
+.sect-cta__copy { font-size: 17.5px; font-weight: 500; color: var(--ink-text); max-width: 46ch; }
+.sect-cta__actions { display: flex; gap: 12px; flex-wrap: wrap; }
+/* solid dark secondary for use on the light stone sections */
+.btn--dark { background: var(--ink); color: var(--bone); border-color: var(--ink); }
+.btn--dark:hover { background: var(--patina); border-color: var(--patina); }
+
+.why__actions { margin-top: 34px; display: flex; gap: 12px; flex-wrap: wrap; }
+
 /* ===================== SERVICES (schedule) ===================== */
 .services { background: var(--stone); color: var(--ink-text); }
 .services__head { display: grid; grid-template-columns: 1fr 0.8fr; gap: 40px; align-items: end; max-width: none; }
@@ -654,6 +685,11 @@ img, svg { display: block; max-width: 100%; }
   .phone-link { border: 1px solid var(--line-dark); border-radius: 999px; padding: 9px 12px; }
   .hero__actions { flex-direction: column; align-items: stretch; }
   .hero__actions .btn { width: 100%; }
+  .sect-cta { margin-top: 34px; padding-top: 26px; }
+  .sect-cta__actions, .why__actions { flex-direction: column; align-items: stretch; width: 100%; }
+  .sect-cta__actions .btn, .why__actions .btn { width: 100%; }
+  .brands__inner { gap: 14px; }
+  .brands__list { gap: 12px 20px; }
   .stats { gap: 20px 30px; margin-top: 40px; }
   .stat { flex: 1 1 40%; }
   .stat--rating { flex-basis: 100%; }
