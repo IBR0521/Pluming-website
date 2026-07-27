@@ -113,9 +113,14 @@
       });
       window.addEventListener("focus", finishIntro);
 
-      /* scroll-scrubbed: lines clip up + fade, stats lift, backdrop layers drift apart */
+      /* scroll-scrubbed: lines clip up + fade, stats lift, backdrop layers drift apart.
+         scrub:true locks these exactly to scroll position with no extra smoothing lag.
+         A numeric scrub (e.g. 0.6) intentionally lets the animation trail up to that
+         many seconds behind the actual scroll position before catching up — a second,
+         independent source of "scroll input does something, then it catches up a beat
+         later" on top of whatever the scroller itself is doing. Removed. */
       if (hasST) {
-        var tl = G.timeline({ scrollTrigger: { trigger: hero, start: "top top", end: "bottom top", scrub: 0.6 } });
+        var tl = G.timeline({ scrollTrigger: { trigger: hero, start: "top top", end: "bottom top", scrub: true } });
         tl.fromTo(lines, { yPercent: 0, opacity: 1 },
                   { yPercent: -115, opacity: 0.12, ease: "none", stagger: 0.05, immediateRender: false }, 0)
           .to("[data-stats] .stat", { yPercent: -30, opacity: 0.25, ease: "none", stagger: 0.04 }, 0)
@@ -130,7 +135,7 @@
           if (!el) return;
           G.fromTo(el, { scale: 1.18, yPercent: -6 }, {
             scale: 1, yPercent: 6, ease: "none",
-            scrollTrigger: { trigger: el.closest("section, figure") || el, start: "top bottom", end: "bottom top", scrub: 0.8 }
+            scrollTrigger: { trigger: el.closest("section, figure") || el, start: "top bottom", end: "bottom top", scrub: true }
           });
         });
       }
@@ -158,54 +163,19 @@
     if (reduce && hasST) window.ScrollTrigger.getAll().forEach(function (s) { s.kill(); });
   })();
 
-  /* ---- Lenis smooth scroll ----
-     Engaged only when rAF is genuinely healthy. A rAF-driven scroller feels
-     frozen in a throttled webview (unfocused window, embedded pane), which is
-     far worse than no smoothing at all — so measure the real frame rate first
-     and otherwise leave native scrolling untouched. */
-  (function () {
-    if (!window.Lenis || reduceMotionGlobal) return;
-    var frames = 0, t0 = performance.now();
-    (function probe() {
-      frames++;
-      var elapsed = performance.now() - t0;
-      if (elapsed < 260) { requestAnimationFrame(probe); return; }
-      if (frames / (elapsed / 1000) < 20) return;      // throttled -> keep native scroll
-
-      /* autoRaf:false — Lenis, GSAP's ticker, and the WebGL hero canvas were each
-         running their own independent requestAnimationFrame loop, uncoordinated.
-         Drive Lenis from GSAP's ticker instead so there is one scheduling source
-         for scroll + animation, which is the pattern Lenis's own docs recommend
-         when pairing with GSAP — it removes a whole class of scroll-time jank. */
-      var lenis = new Lenis({ duration: 1.05, smoothWheel: true, touchMultiplier: 1.6, autoRaf: false });
-      document.documentElement.style.scrollBehavior = "auto";  // CSS smooth fights Lenis
-
-      if (window.gsap) {
-        window.gsap.ticker.add(function (time) { lenis.raf(time * 1000); });
-        window.gsap.ticker.lagSmoothing(0);
-      } else {
-        var lenisRaf = function (t) { lenis.raf(t); requestAnimationFrame(lenisRaf); };
-        requestAnimationFrame(lenisRaf);
-      }
-
-      if (window.ScrollTrigger) {
-        lenis.on("scroll", window.ScrollTrigger.update);
-        window.ScrollTrigger.refresh();
-      }
-      /* route in-page anchors through Lenis so nav jumps stay smooth */
-      document.addEventListener("click", function (e) {
-        var a = e.target.closest && e.target.closest('a[href^="#"]');
-        if (!a) return;
-        var id = a.getAttribute("href");
-        if (!id || id === "#") return;
-        var target = document.querySelector(id);
-        if (!target) return;
-        e.preventDefault();
-        lenis.scrollTo(target, { offset: -68, duration: 1.15 });
-      });
-      window.__lenis = lenis;
-    })();
-  })();
+  /* ---- smooth scroll: REMOVED ----
+     Lenis intercepts wheel/touch input and replays it as a JS-driven scroll
+     tween instead of letting the browser scroll natively. That makes the
+     scroll position depend on the main thread being free at that exact
+     instant — any contention (the WebGL canvas, GSAP, layout) stalls the
+     tween, which reads as: scroll input does nothing for a beat, then the
+     page jerks to catch up. That's not a tuning problem, it's what a
+     JS-driven scroller does under load, and no amount of throttling the
+     other work fully prevents it. Native scroll is compositor-driven and
+     doesn't have this failure mode at all, so it's the fix. CSS
+     `scroll-behavior: smooth` (already set globally) still gives anchor
+     links an eased jump; ScrollTrigger's parallax/reveal work is driven by
+     the browser's native scroll position, no smooth-scroll library needed. */
 
   /* ---- instant estimate: the ballpark gauge ----
      Homeowner picks a job + severity, the gauge swings to a live price range,
