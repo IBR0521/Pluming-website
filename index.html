@@ -17,7 +17,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;0,900;1,700&family=Space+Grotesk:wght@400;500;600;700&family=Archivo:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="styles.css?v=22" />
+  <link rel="stylesheet" href="styles.css?v=23" />
 
   <script type="application/ld+json">
   {
@@ -343,13 +343,14 @@
 
     <!-- ===================== QUOTE / PHOTO BAND ===================== -->
     <section class="band" aria-label="Our standard">
-      <div class="band__media" aria-hidden="true">
-        <img src="assets/img/gauge-pipes.jpg" alt="" loading="lazy" />
-      </div>
+      <!-- schematic texture rather than a photo: the only other photo on the page is
+           the hero's, and repeating it here read as a mistake -->
+      <div class="band__media" aria-hidden="true"></div>
       <div class="wrap band__inner">
         <p class="band__kicker">The standard</p>
-        <p class="band__quote">“We leave a place cleaner than we found it, and we never hand you a bill that doesn't match the quote.”</p>
-        <p class="band__by">— The standard we hold every job to</p>
+        <!-- stated as a pledge, not a quotation — nobody is being quoted -->
+        <p class="band__quote">We leave a place cleaner than we found it. And we never hand you a bill that doesn't match the quote.</p>
+        <p class="band__by">Every job. In writing. No exceptions.</p>
       </div>
     </section>
 
@@ -673,6 +674,6 @@
   <script src="assets/js/gsap.min.js"></script>
   <script src="assets/js/ScrollTrigger.min.js"></script>
   <script src="assets/js/fluid-cursor.js?v=8"></script>
-  <script src="script.js?v=16"></script>
+  <script src="script.js?v=17"></script>
 </body>
 </html>

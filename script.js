@@ -125,7 +125,7 @@
           .to("[data-hero-blueprint]", { yPercent: -26, ease: "none" }, 0);
 
         /* section imagery: oversized, scaled, drifting as it passes through view */
-        [".band__media img", ".craft__photo img"].forEach(function (sel) {
+        [".band__media", ".craft__photo img"].forEach(function (sel) {
           var el = document.querySelector(sel);
           if (!el) return;
           G.fromTo(el, { scale: 1.18, yPercent: -6 }, {
