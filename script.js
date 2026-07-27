@@ -158,6 +158,42 @@
     if (reduce && hasST) window.ScrollTrigger.getAll().forEach(function (s) { s.kill(); });
   })();
 
+  /* ---- Lenis smooth scroll ----
+     Engaged only when rAF is genuinely healthy. A rAF-driven scroller feels
+     frozen in a throttled webview (unfocused window, embedded pane), which is
+     far worse than no smoothing at all — so measure the real frame rate first
+     and otherwise leave native scrolling untouched. */
+  (function () {
+    if (!window.Lenis || reduceMotionGlobal) return;
+    var frames = 0, t0 = performance.now();
+    (function probe() {
+      frames++;
+      var elapsed = performance.now() - t0;
+      if (elapsed < 260) { requestAnimationFrame(probe); return; }
+      if (frames / (elapsed / 1000) < 20) return;      // throttled -> keep native scroll
+
+      var lenis = new Lenis({ duration: 1.05, smoothWheel: true, touchMultiplier: 1.6, autoRaf: true });
+      document.documentElement.style.scrollBehavior = "auto";  // CSS smooth fights Lenis
+
+      if (window.ScrollTrigger) {
+        lenis.on("scroll", window.ScrollTrigger.update);
+        window.ScrollTrigger.refresh();
+      }
+      /* route in-page anchors through Lenis so nav jumps stay smooth */
+      document.addEventListener("click", function (e) {
+        var a = e.target.closest && e.target.closest('a[href^="#"]');
+        if (!a) return;
+        var id = a.getAttribute("href");
+        if (!id || id === "#") return;
+        var target = document.querySelector(id);
+        if (!target) return;
+        e.preventDefault();
+        lenis.scrollTo(target, { offset: -68, duration: 1.15 });
+      });
+      window.__lenis = lenis;
+    })();
+  })();
+
   /* ---- instant estimate: the ballpark gauge ----
      Homeowner picks a job + severity, the gauge swings to a live price range,
      and the choice carries into the booking form so there's no re-typing.
