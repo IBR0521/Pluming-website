@@ -17,7 +17,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;0,900;1,700&family=Space+Grotesk:wght@400;500;600;700&family=Archivo:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="styles.css?v=20" />
+  <link rel="stylesheet" href="styles.css?v=22" />
 
   <script type="application/ld+json">
   {
@@ -594,8 +594,19 @@
           <!-- honeypot: real people leave this empty; bots fill it (FormSubmit auto-detects _honey) -->
           <input class="hp-field" type="text" name="_honey" tabindex="-1" autocomplete="off" aria-hidden="true" />
           <button class="btn btn--copper btn--lg btn--block" type="submit" data-submit>Send it — we'll call you back</button>
+          <!-- the three objections a homeowner has with a finger over the button -->
+          <ul class="reassure" aria-label="What happens next">
+            <li>No obligation</li>
+            <li>Flat price up front</li>
+            <li>Licensed &amp; insured</li>
+          </ul>
           <p class="book__form-note" id="form-status" role="status" aria-live="polite">No spam, ever — your details are only used to contact you about this request.</p>
         </form>
+
+        <p class="book__urgent">
+          Water coming in right now?
+          <a href="tel:+15555550100">Skip the form — call (555) 555-0100</a>
+        </p>
 
         <!-- success confirmation, swapped in after a request lands -->
         <div class="book__done" id="book-done" role="status" aria-live="polite" hidden>
