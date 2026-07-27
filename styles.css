@@ -125,7 +125,7 @@ img, svg { display: block; max-width: 100%; }
 .brand__sub { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--bone-soft); }
 
 .site-nav { display: flex; gap: 30px; margin-left: 18px; margin-right: auto; }
-.site-nav a { text-decoration: none; font-family: var(--font-mono); font-size: 12.5px; font-weight: 400; letter-spacing: 0.08em; color: var(--bone-soft); position: relative; padding: 4px 0; }
+.site-nav a { text-decoration: none; font-family: var(--font-mono); font-size: 12.5px; font-weight: 400; letter-spacing: 0.08em; color: rgba(232, 239, 250, 0.88); text-shadow: 0 1px 8px rgba(0, 0, 0, 0.75); position: relative; padding: 4px 0; }
 .site-nav a::after { content: ""; position: absolute; left: 0; bottom: -2px; width: 0; height: 2px; background: var(--copper); transition: width 0.22s ease; }
 .site-nav a:hover { color: var(--bone); }
 .site-nav a:hover::after { width: 100%; }
@@ -191,38 +191,34 @@ img, svg { display: block; max-width: 100%; }
 /* once WebGL takes over the typography, retire the CSS marquee fallback */
 .hero.webgl-on .hero__marquee { display: none; }
 
-/* layer 0 — real commercial pipework, graded down into the midnight so it reads as
-   atmosphere rather than stock photography. The blueprint draws on top of it. */
+/* layer 0 — FULL-BLEED commercial pipework. The photograph is the hero, not an
+   accent: edge to edge at real richness, with legibility handled by a directional
+   scrim rather than by crushing the image. No edge masks needed — it fills. */
 .hero__photo {
-  position: absolute; z-index: 0; top: 50%; right: 0; transform: translateY(-50%);
-  width: clamp(460px, 54vw, 900px); height: 108%; pointer-events: none; overflow: hidden;
+  position: absolute; z-index: 0; inset: 0; pointer-events: none; overflow: hidden;
 }
 .hero__photo img {
-  width: 100%; height: 100%; object-fit: cover; object-position: 62% 50%;
-  filter: grayscale(0.82) contrast(1.18) brightness(0.4);
-  transform: scale(1.06); transform-origin: 70% 50%; will-change: transform;
+  width: 100%; height: 100%; object-fit: cover; object-position: 64% 48%;
+  filter: grayscale(0.42) contrast(1.14) brightness(0.66) saturate(0.85);
+  transform: scale(1.06); transform-origin: 68% 50%; will-change: transform;
 }
-/* dissolve the photo into the void + tint it midnight/brass */
+/* directional scrim: heavy under the copy column, clearing to let the metal read */
 .hero__photo::after {
   content: ""; position: absolute; inset: 0;
   background:
-    linear-gradient(90deg, #080d19 2%, rgba(8, 13, 25, 0.7) 30%, rgba(8, 13, 25, 0.28) 64%, rgba(10, 18, 34, 0.5) 100%),
-    radial-gradient(72% 60% at 62% 44%, rgba(198, 151, 73, 0.14), transparent 70%);
+    linear-gradient(94deg, rgba(6, 10, 20, 0.96) 0%, rgba(6, 10, 20, 0.9) 26%, rgba(7, 12, 24, 0.62) 50%, rgba(8, 14, 27, 0.34) 74%, rgba(9, 16, 30, 0.42) 100%),
+    linear-gradient(180deg, rgba(6, 10, 20, 0.72) 0%, transparent 22%, transparent 74%, rgba(5, 9, 18, 0.82) 100%),
+    radial-gradient(58% 52% at 70% 42%, rgba(198, 151, 73, 0.1), transparent 72%);
 }
-/* Two masks INTERSECTED so every free edge reaches true zero.
-   A single radial left ~15% alpha at x=0 — the box then ended abruptly, which read
-   as a hard vertical border. The right edge needs no fade: it's the viewport edge. */
-.hero__photo {
-  -webkit-mask-image:
-    linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.22) 22%, #000 58%),
-    linear-gradient(180deg, transparent 0%, #000 15%, #000 85%, transparent 100%);
-  -webkit-mask-composite: source-in;
-  mask-image:
-    linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.22) 22%, #000 58%),
-    linear-gradient(180deg, transparent 0%, #000 15%, #000 85%, transparent 100%);
-  mask-composite: intersect;
+/* mobile: copy spans the full width, so the scrim turns vertical instead of directional */
+@media (max-width: 860px) {
+  .hero__photo img { object-position: 62% 50%; filter: grayscale(0.5) contrast(1.12) brightness(0.5) saturate(0.85); }
+  .hero__photo::after {
+    background:
+      linear-gradient(180deg, rgba(6, 10, 20, 0.92) 0%, rgba(6, 10, 20, 0.8) 42%, rgba(7, 12, 24, 0.6) 70%, rgba(5, 9, 18, 0.88) 100%),
+      radial-gradient(70% 40% at 60% 30%, rgba(198, 151, 73, 0.1), transparent 74%);
+  }
 }
-@media (max-width: 860px) { .hero__photo { display: none; } }
 
 /* engineering blueprint — crisp vector layer floating in the right-hand void.
    Sized off the free space beside the copy so it never crowds the headline. */
@@ -298,10 +294,23 @@ img, svg { display: block; max-width: 100%; }
 }
 .hero__title .line { display: block; overflow: hidden; padding-bottom: 0.06em; }
 .hero__title .line__in { display: block; }
-.hero__title .line__in--gold {
-  background: linear-gradient(172deg, #ffedbf 2%, #e6ba64 50%, #c1923c 100%);
-  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: var(--brass);
-  font-style: italic;
+/* The material becomes the typography: real pipework clipped inside the letterforms,
+   warmed with a brass wash so it stays on-brand and keeps enough luminance to read.
+   Guarded — without background-clip support the line stays solid brass, never invisible. */
+.hero__title .line__in--gold { color: var(--brass); font-style: italic; }
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .hero__title .line__in--gold {
+    background-image:
+      linear-gradient(178deg, rgba(255, 240, 208, 0.66) 0%, rgba(233, 190, 104, 0.56) 52%, rgba(196, 148, 60, 0.66) 100%),
+      url("assets/img/gauge-pipes.jpg");
+    background-size: cover, 118% auto;
+    background-position: 50% 50%, 52% 34%;
+    background-repeat: no-repeat;
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+    /* full line box + padding so the clip region actually contains the glyphs */
+    line-height: 1.1; padding-bottom: 0.1em; margin-bottom: -0.1em;
+  }
 }
 
 /* absolute contrast: pure-white body copy */
@@ -329,9 +338,11 @@ img, svg { display: block; max-width: 100%; }
   color: #fff;
 }
 .stat b i { font-style: normal; font-size: 0.4em; color: var(--brass); vertical-align: super; margin-left: 3px; }
+/* 10px micro-labels sit over a full-bleed photo now — lift the alpha and add a
+   shadow so they stay readable where the metal is bright */
 .stat span {
-  display: block; margin-top: 12px; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.14em;
-  text-transform: uppercase; color: rgba(255, 255, 255, 0.52);
+  display: block; margin-top: 12px; font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.14em;
+  text-transform: uppercase; color: rgba(255, 255, 255, 0.72); text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8);
 }
 /* background-clip:text paints the gradient only INSIDE the element's box, so the
    0.82 line-height cropped the top and bottom off the glyphs. Give it a full line
