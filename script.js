@@ -334,26 +334,36 @@
       io.unobserve(el);
     };
 
-    /* threshold 0: any sliver counts. At 0.12 a fast scroll could carry an element
-       through the viewport between sampling frames, so it never registered as
-       intersecting and stayed at opacity:0 permanently. */
+    /* threshold 0: any sliver counts — needed so a fast scroll can't carry an
+       element through the viewport between sampling frames and leave it stuck
+       at opacity:0 permanently (see the -8%/0.94 history: that bug is why
+       threshold is 0 and not something larger).
+       rootMargin -22% on the bottom edge is what actually controls WHEN it
+       fires: it shrinks the trigger zone to the top ~78% of the viewport, so
+       the reveal doesn't fire the instant a section's edge appears at the very
+       bottom of the screen — it waits until the section has scrolled up into
+       view enough to actually be seen animating in, not just its tail end. */
     var io = new IntersectionObserver(function (entries) {
       var batch = 0;
       entries.forEach(function (entry) {
         if (entry.isIntersecting) show(entry.target, Math.min(batch++, 4) * 70);
       });
-    }, { threshold: 0, rootMargin: "0px 0px -8% 0px" });
+    }, { threshold: 0, rootMargin: "0px 0px -22% 0px" });
     revealTargets.forEach(function (el) { io.observe(el); });
 
     /* Safety net: whatever the observer misses, reveal anything that has reached or
-       passed the viewport. Content must never be left permanently invisible. */
+       passed the viewport. Content must never be left permanently invisible.
+       This threshold should sit at or after the observer's own trigger point —
+       it was previously far more lenient (0.94 = fires the moment 6% of the
+       screen has the element in it) which meant it was firing earlier than
+       the observer, and was likely the dominant cause of "too early" reveals. */
     var sweepT = null;
     var sweep = function () {
       sweepT = null;
       var vh = window.innerHeight;
       revealTargets.forEach(function (el) {
         if (el.classList.contains("is-in")) return;
-        if (el.getBoundingClientRect().top < vh * 0.94) show(el, 0);
+        if (el.getBoundingClientRect().top < vh * 0.76) show(el, 0);
       });
     };
     window.addEventListener("scroll", function () {
